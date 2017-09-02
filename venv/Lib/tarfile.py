@@ -1549,9 +1549,7 @@ class TarFile(object):
 
         if mode in ("r", "r:*"):
             # Find out which *open() is appropriate for opening the file.
-            def not_compressed(comptype):
-                return cls.OPEN_METH[comptype] == 'taropen'
-            for comptype in sorted(cls.OPEN_METH, key=not_compressed):
+            for comptype in cls.OPEN_METH:
                 func = getattr(cls, cls.OPEN_METH[comptype])
                 if fileobj is not None:
                     saved_pos = fileobj.tell()

@@ -10,13 +10,7 @@ import stat
 import fnmatch
 import collections
 import errno
-
-try:
-    import zlib
-    del zlib
-    _ZLIB_SUPPORTED = True
-except ImportError:
-    _ZLIB_SUPPORTED = False
+import tarfile
 
 try:
     import bz2
@@ -70,7 +64,7 @@ class ReadError(OSError):
 
 class RegistryError(Exception):
     """Raised when a registry operation with the archiving
-    and unpacking registries fails"""
+    and unpacking registeries fails"""
 
 
 def copyfileobj(fsrc, fdst, length=16*1024):
@@ -608,22 +602,23 @@ def _make_tarball(base_name, base_dir, compress="gzip", verbose=0, dry_run=0,
 
     Returns the output filename.
     """
-    if compress is None:
-        tar_compression = ''
-    elif _ZLIB_SUPPORTED and compress == 'gzip':
-        tar_compression = 'gz'
-    elif _BZ2_SUPPORTED and compress == 'bzip2':
-        tar_compression = 'bz2'
-    elif _LZMA_SUPPORTED and compress == 'xz':
-        tar_compression = 'xz'
-    else:
+    tar_compression = {'gzip': 'gz', None: ''}
+    compress_ext = {'gzip': '.gz'}
+
+    if _BZ2_SUPPORTED:
+        tar_compression['bzip2'] = 'bz2'
+        compress_ext['bzip2'] = '.bz2'
+
+    if _LZMA_SUPPORTED:
+        tar_compression['xz'] = 'xz'
+        compress_ext['xz'] = '.xz'
+
+    # flags for compression program, each element of list will be an argument
+    if compress is not None and compress not in compress_ext:
         raise ValueError("bad value for 'compress', or compression format not "
                          "supported : {0}".format(compress))
 
-    import tarfile  # late import for breaking circular dependency
-
-    compress_ext = '.' + tar_compression if compress else ''
-    archive_name = base_name + '.tar' + compress_ext
+    archive_name = base_name + '.tar' + compress_ext.get(compress, '')
     archive_dir = os.path.dirname(archive_name)
 
     if archive_dir and not os.path.exists(archive_dir):
@@ -649,7 +644,7 @@ def _make_tarball(base_name, base_dir, compress="gzip", verbose=0, dry_run=0,
         return tarinfo
 
     if not dry_run:
-        tar = tarfile.open(archive_name, 'w|%s' % tar_compression)
+        tar = tarfile.open(archive_name, 'w|%s' % tar_compression[compress])
         try:
             tar.add(base_dir, filter=_set_uid_gid)
         finally:
@@ -660,10 +655,13 @@ def _make_tarball(base_name, base_dir, compress="gzip", verbose=0, dry_run=0,
 def _make_zipfile(base_name, base_dir, verbose=0, dry_run=0, logger=None):
     """Create a zip file from all the files under 'base_dir'.
 
-    The output zip file will be named 'base_name' + ".zip".  Returns the
-    name of the output zip file.
+    The output zip file will be named 'base_name' + ".zip".  Uses either the
+    "zipfile" Python module (if available) or the InfoZIP "zip" utility
+    (if installed and found on the default search path).  If neither tool is
+    available, raises ExecError.  Returns the name of the output zip
+    file.
     """
-    import zipfile  # late import for breaking circular dependency
+    import zipfile
 
     zip_filename = base_name + ".zip"
     archive_dir = os.path.dirname(base_name)
@@ -682,10 +680,9 @@ def _make_zipfile(base_name, base_dir, verbose=0, dry_run=0, logger=None):
         with zipfile.ZipFile(zip_filename, "w",
                              compression=zipfile.ZIP_DEFLATED) as zf:
             path = os.path.normpath(base_dir)
-            if path != os.curdir:
-                zf.write(path, path)
-                if logger is not None:
-                    logger.info("adding '%s'", path)
+            zf.write(path, path)
+            if logger is not None:
+                logger.info("adding '%s'", path)
             for dirpath, dirnames, filenames in os.walk(base_dir):
                 for name in sorted(dirnames):
                     path = os.path.normpath(os.path.join(dirpath, name))
@@ -702,13 +699,10 @@ def _make_zipfile(base_name, base_dir, verbose=0, dry_run=0, logger=None):
     return zip_filename
 
 _ARCHIVE_FORMATS = {
+    'gztar': (_make_tarball, [('compress', 'gzip')], "gzip'ed tar-file"),
     'tar':   (_make_tarball, [('compress', None)], "uncompressed tar file"),
-}
-
-if _ZLIB_SUPPORTED:
-    _ARCHIVE_FORMATS['gztar'] = (_make_tarball, [('compress', 'gzip')],
-                                "gzip'ed tar-file")
-    _ARCHIVE_FORMATS['zip'] = (_make_zipfile, [], "ZIP file")
+    'zip':   (_make_zipfile, [], "ZIP file")
+    }
 
 if _BZ2_SUPPORTED:
     _ARCHIVE_FORMATS['bztar'] = (_make_tarball, [('compress', 'bzip2')],
@@ -757,8 +751,8 @@ def make_archive(base_name, format, root_dir=None, base_dir=None, verbose=0,
     """Create an archive file (eg. zip or tar).
 
     'base_name' is the name of the file to create, minus any format-specific
-    extension; 'format' is the archive format: one of "zip", "tar", "gztar",
-    "bztar", or "xztar".  Or any other registered format.
+    extension; 'format' is the archive format: one of "zip", "tar", "bztar"
+    or "gztar".
 
     'root_dir' is a directory that will be the root directory of the
     archive; ie. we typically chdir into 'root_dir' before creating the
@@ -859,7 +853,7 @@ def register_unpack_format(name, extensions, function, extra_args=None,
     _UNPACK_FORMATS[name] = extensions, function, extra_args, description
 
 def unregister_unpack_format(name):
-    """Removes the pack format from the registry."""
+    """Removes the pack format from the registery."""
     del _UNPACK_FORMATS[name]
 
 def _ensure_directory(path):
@@ -871,7 +865,10 @@ def _ensure_directory(path):
 def _unpack_zipfile(filename, extract_dir):
     """Unpack zip `filename` to `extract_dir`
     """
-    import zipfile  # late import for breaking circular dependency
+    try:
+        import zipfile
+    except ImportError:
+        raise ReadError('zlib not supported, cannot unpack this archive.')
 
     if not zipfile.is_zipfile(filename):
         raise ReadError("%s is not a zip file" % filename)
@@ -905,7 +902,6 @@ def _unpack_zipfile(filename, extract_dir):
 def _unpack_tarfile(filename, extract_dir):
     """Unpack tar/tar.gz/tar.bz2/tar.xz `filename` to `extract_dir`
     """
-    import tarfile  # late import for breaking circular dependency
     try:
         tarobj = tarfile.open(filename)
     except tarfile.TarError:
@@ -917,13 +913,10 @@ def _unpack_tarfile(filename, extract_dir):
         tarobj.close()
 
 _UNPACK_FORMATS = {
+    'gztar': (['.tar.gz', '.tgz'], _unpack_tarfile, [], "gzip'ed tar-file"),
     'tar':   (['.tar'], _unpack_tarfile, [], "uncompressed tar file"),
-    'zip':   (['.zip'], _unpack_zipfile, [], "ZIP file"),
-}
-
-if _ZLIB_SUPPORTED:
-    _UNPACK_FORMATS['gztar'] = (['.tar.gz', '.tgz'], _unpack_tarfile, [],
-                                "gzip'ed tar-file")
+    'zip':   (['.zip'], _unpack_zipfile, [], "ZIP file")
+    }
 
 if _BZ2_SUPPORTED:
     _UNPACK_FORMATS['bztar'] = (['.tar.bz2', '.tbz2'], _unpack_tarfile, [],
@@ -948,10 +941,10 @@ def unpack_archive(filename, extract_dir=None, format=None):
     `extract_dir` is the name of the target directory, where the archive
     is unpacked. If not provided, the current working directory is used.
 
-    `format` is the archive format: one of "zip", "tar", "gztar", "bztar",
-    or "xztar".  Or any other registered format.  If not provided,
-    unpack_archive will use the filename extension and see if an unpacker
-    was registered for that extension.
+    `format` is the archive format: one of "zip", "tar", or "gztar". Or any
+    other registered format. If not provided, unpack_archive will use the
+    filename extension and see if an unpacker was registered for that
+    extension.
 
     In case none is found, a ValueError is raised.
     """

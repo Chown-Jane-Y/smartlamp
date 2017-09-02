@@ -16,8 +16,7 @@ from _weakref import (
      proxy,
      CallableProxyType,
      ProxyType,
-     ReferenceType,
-     _remove_dead_weakref)
+     ReferenceType)
 
 from _weakrefset import WeakSet, _IterationGuard
 
@@ -112,9 +111,7 @@ class WeakValueDictionary(collections.MutableMapping):
                 if self._iterating:
                     self._pending_removals.append(wr.key)
                 else:
-                    # Atomic removal is necessary since this function
-                    # can be called asynchronously by the GC
-                    _remove_dead_weakref(d, wr.key)
+                    del self.data[wr.key]
         self._remove = remove
         # A list of keys to be removed
         self._pending_removals = []
@@ -128,12 +125,9 @@ class WeakValueDictionary(collections.MutableMapping):
         # We shouldn't encounter any KeyError, because this method should
         # always be called *before* mutating the dict.
         while l:
-            key = l.pop()
-            _remove_dead_weakref(d, key)
+            del d[l.pop()]
 
     def __getitem__(self, key):
-        if self._pending_removals:
-            self._commit_removals()
         o = self.data[key]()
         if o is None:
             raise KeyError(key)
@@ -146,13 +140,9 @@ class WeakValueDictionary(collections.MutableMapping):
         del self.data[key]
 
     def __len__(self):
-        if self._pending_removals:
-            self._commit_removals()
-        return len(self.data)
+        return len(self.data) - len(self._pending_removals)
 
     def __contains__(self, key):
-        if self._pending_removals:
-            self._commit_removals()
         try:
             o = self.data[key]()
         except KeyError:
@@ -168,8 +158,6 @@ class WeakValueDictionary(collections.MutableMapping):
         self.data[key] = KeyedRef(value, self._remove, key)
 
     def copy(self):
-        if self._pending_removals:
-            self._commit_removals()
         new = WeakValueDictionary()
         for key, wr in self.data.items():
             o = wr()
@@ -181,8 +169,6 @@ class WeakValueDictionary(collections.MutableMapping):
 
     def __deepcopy__(self, memo):
         from copy import deepcopy
-        if self._pending_removals:
-            self._commit_removals()
         new = self.__class__()
         for key, wr in self.data.items():
             o = wr()
@@ -191,8 +177,6 @@ class WeakValueDictionary(collections.MutableMapping):
         return new
 
     def get(self, key, default=None):
-        if self._pending_removals:
-            self._commit_removals()
         try:
             wr = self.data[key]
         except KeyError:
@@ -206,8 +190,6 @@ class WeakValueDictionary(collections.MutableMapping):
                 return o
 
     def items(self):
-        if self._pending_removals:
-            self._commit_removals()
         with _IterationGuard(self):
             for k, wr in self.data.items():
                 v = wr()
@@ -215,8 +197,6 @@ class WeakValueDictionary(collections.MutableMapping):
                     yield k, v
 
     def keys(self):
-        if self._pending_removals:
-            self._commit_removals()
         with _IterationGuard(self):
             for k, wr in self.data.items():
                 if wr() is not None:
@@ -234,14 +214,10 @@ class WeakValueDictionary(collections.MutableMapping):
         keep the values around longer than needed.
 
         """
-        if self._pending_removals:
-            self._commit_removals()
         with _IterationGuard(self):
             yield from self.data.values()
 
     def values(self):
-        if self._pending_removals:
-            self._commit_removals()
         with _IterationGuard(self):
             for wr in self.data.values():
                 obj = wr()
@@ -263,27 +239,24 @@ class WeakValueDictionary(collections.MutableMapping):
         try:
             o = self.data.pop(key)()
         except KeyError:
-            o = None
-        if o is None:
             if args:
                 return args[0]
-            else:
-                raise KeyError(key)
+            raise
+        if o is None:
+            raise KeyError(key)
         else:
             return o
 
     def setdefault(self, key, default=None):
         try:
-            o = self.data[key]()
+            wr = self.data[key]
         except KeyError:
-            o = None
-        if o is None:
             if self._pending_removals:
                 self._commit_removals()
             self.data[key] = KeyedRef(default, self._remove, key)
             return default
         else:
-            return o
+            return wr()
 
     def update(*args, **kwargs):
         if not args:
@@ -314,8 +287,6 @@ class WeakValueDictionary(collections.MutableMapping):
         keep the values around longer than needed.
 
         """
-        if self._pending_removals:
-            self._commit_removals()
         return list(self.data.values())
 
 

@@ -1,5 +1,5 @@
 @echo off
-set "VIRTUAL_ENV=C:\Users\HP\Desktop\repo\smartlamp-all\smartlamp-core\venv"
+set "VIRTUAL_ENV=C:\Anaconda3\envs\djangorest_env"
 
 if defined _OLD_VIRTUAL_PROMPT (
     set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
@@ -9,7 +9,7 @@ if defined _OLD_VIRTUAL_PROMPT (
     )
     set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
 )
-set "PROMPT=(venv) %PROMPT%"
+set "PROMPT=(djangorest_env) %PROMPT%"
 
 REM Don't use () to avoid problems with them in %PATH%
 if defined _OLD_VIRTUAL_PYTHONHOME goto ENDIFVHOME
