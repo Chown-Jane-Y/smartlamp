@@ -18,8 +18,10 @@ class HubViewSet(viewsets.ModelViewSet):
         :param kwargs: 
         :return: 
         """
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
+        instance = self.get_object()        # manage_hub.models.Hub
+        serializer = self.get_serializer(instance)  # manage_hub.serializers.HubSerializer
+        print(serializer.data)           # rest_framework.utils.serializer_helpers.ReturnDict
+        print(type(Response(serializer.data).data))
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
@@ -34,10 +36,10 @@ class HubViewSet(viewsets.ModelViewSet):
         print(kwargs)
         queryset = self.filter_queryset(self.get_queryset())
 
-        # page = self.paginate_queryset(queryset)
-        # if page is not None:
-        #     serializer = self.get_serializer(page, many=True)
-        #     return self.get_paginated_response(serializer.data)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
 

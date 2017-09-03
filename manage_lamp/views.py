@@ -3,6 +3,7 @@ from manage_lamp.serializers import LampSerializer
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import api_view, list_route
 import datetime
 
 
@@ -19,6 +20,7 @@ class LampViewSet(viewsets.ModelViewSet):
         :return: 
         """
         instance = self.get_object()
+        print(instance)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
@@ -32,12 +34,14 @@ class LampViewSet(viewsets.ModelViewSet):
         """
         print('=============list===============')
         print(kwargs)
+        print(request.query_params)
+
         queryset = self.filter_queryset(self.get_queryset())
 
-        # page = self.paginate_queryset(queryset)
-        # if page is not None:
-        #     serializer = self.get_serializer(page, many=True)
-        #     return self.get_paginated_response(serializer.data)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
 
@@ -59,3 +63,8 @@ class LampViewSet(viewsets.ModelViewSet):
         instance.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @list_route(url_path='test12')
+    def test(self, request):
+        return Response({'success': True, 'msg': '操作成功'})
+

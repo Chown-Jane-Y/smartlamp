@@ -19,7 +19,16 @@ class Hub(models.Model):
     updated_time = models.DateTimeField(auto_now=True)
     deleted_time = models.DateTimeField(db_index=True, null=True, blank=True)
 
+    def __str__(self):
+        """
+        Display the sn of object instead of 'Hub object'. 
+        """
+        return self.sn
+
     def __unicode__(self):
+        """
+        Apply to python2 like __str__.
+        """
         return self.sn
 
     class Meta:

@@ -1,15 +1,7 @@
-from django.conf.urls import url, include
-from manage_hub import views
-from rest_framework import routers
+from django.conf.urls import url
+from manage_hub.views import HubViewSet as hub_viewset
 
-router = routers.DefaultRouter()
-router.register(r'hubs', views.HubViewSet)
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
+    url(r'^', hub_viewset),
 ]
-
-# urlpatterns = [
-#     url(r'^hubs/$', views.hubs_list),
-#     url(r'^hubs/(?P<pk>[0-9]+)/$', views.hub_detail),
-# ]

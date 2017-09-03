@@ -62,9 +62,9 @@ def logout_user(request):
     """
     data = request.GET.get("ok", "")
     if data:
-        print data
+        print(data)
     else:
-        print 'no data'
+        print('no data')
     logout(request)
     message = MessageSuccess(data="User Logout Success!")
     return Response(message.data(), status=status.HTTP_200_OK)

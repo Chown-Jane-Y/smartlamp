@@ -6,7 +6,7 @@ class HubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hub
-        fields = ('sn', 'status', 'rf_band', 'channel', 'address', 'registered_time', 'longitude', 'latitude',
+        fields = ('id', 'sn', 'status', 'rf_band', 'channel', 'address', 'registered_time', 'longitude', 'latitude',
                   'memo', 'is_deleted', 'created_time', 'updated_time', 'deleted_time')
 
     sn = serializers.CharField(read_only=True)
