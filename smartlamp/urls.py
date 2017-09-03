@@ -19,11 +19,12 @@ from django.conf.urls import url, include
 from rest_framework import routers
 from manage_lamp import views as lamp_views
 from manage_hub import views as hub_views
+from manage_user import views as user_views
 
 router = routers.DefaultRouter()
 router.register(r'hubs', hub_views.HubViewSet)
 router.register(r'lamps', lamp_views.LampViewSet)
-
+router.register(r'users', user_views.UserViewSet)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

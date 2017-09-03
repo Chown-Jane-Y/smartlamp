@@ -40,16 +40,16 @@ INSTALLED_APPS = [
     'manage_hub',
     'manage_lamp',
     'rest_framework',
-    # 'manage_user',
+    'manage_user',
     'corsheaders',                          # CORS
 ]
 
-# REST_FRAMEWORK = {
-#     # 'DEFAULT_PERMISSION_CLASSES': [
-#     #     'rest_framework.permissions.IsAdminUser',
-#     # ],
-#     'PAGE_SIZE': 10
-# }
+REST_FRAMEWORK = {
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.IsAdminUser',
+    # ],
+    'PAGE_SIZE': 10
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -123,6 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'manage_user.User'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/

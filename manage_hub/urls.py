@@ -1,7 +1,7 @@
 from django.conf.urls import url
-from manage_hub.views import HubViewSet as hub_viewset
+from manage_hub.views import HubViewSet
 
 
 urlpatterns = [
-    url(r'^', hub_viewset),
+    url(r'^', HubViewSet),
 ]

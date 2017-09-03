@@ -1,13 +1,11 @@
-from django.conf.urls import url, include
-from manage_user import views
-from rest_framework import routers
+from django.conf.urls import url
+from manage_user.views import UserViewSet
 
-router = routers.DefaultRouter()
-router.register(r'users', views.UserViewSet)
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
+    url(r'^', UserViewSet),
 ]
+
 
 # urlpatterns = [
 #     url(r'^hubs/$', views.hubs_list),

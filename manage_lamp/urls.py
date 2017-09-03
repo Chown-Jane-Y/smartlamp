@@ -1,12 +1,9 @@
 from django.conf.urls import url, include
-from manage_lamp import views
-from rest_framework import routers
+from manage_lamp.views import LampViewSet
 
-router = routers.DefaultRouter()
-router.register(r'lamps', views.LampViewSet)
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
+    url(r'^', LampViewSet),
 ]
 
 # urlpatterns = [

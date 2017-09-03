@@ -6,7 +6,7 @@ from manage_user import models
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('id')  # 'name', 'user', 'email', 'is_deleted', 'created_time', 'updated_time', 'deleted_time')
+    list_display = ('id', 'username', 'role', 'email', 'is_superuser', 'is_active')
 
 
 admin.site.register(models.User, UserAdmin)

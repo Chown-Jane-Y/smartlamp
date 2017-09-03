@@ -8,16 +8,16 @@ import datetime
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().filter(is_deleted=False)
+    queryset = User.objects.all()
     serializer_class = UserSerializer
 
     def retrieve(self, request, *args, **kwargs):
         """
         Display one user by id.
-        :param request: 
-        :param args: 
-        :param kwargs: 
-        :return: 
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
         """
         instance = self.get_object()        # manage_user.models.User
         serializer = self.get_serializer(instance)  # manage_user.serializers.UserSerializer
@@ -28,10 +28,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """
         List all users.
-        :param request: 
-        :param args: 
-        :param kwargs: 
-        :return: 
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
         """
         print('=============user list===============')
         print(kwargs)
@@ -48,12 +48,12 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """
-        Delete a user by id. 
+        Delete a user by id.
         Set 'is_deleted' as True, and set the 'deleted_time' as time_now.
-        :param request: 
-        :param args: 
-        :param kwargs: 
-        :return: 
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
         """
         print('===============destroy user', kwargs['pk'], '===================')
         instance = self.get_object()

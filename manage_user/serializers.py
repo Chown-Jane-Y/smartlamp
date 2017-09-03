@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id')  # 'name', 'user', 'email', 'is_deleted', 'created_time', 'updated_time', 'deleted_time')
+        fields = ('id', 'username', 'role', 'email', 'is_superuser', 'is_active')
 
     # is_deleted = serializers.BooleanField(default=False)
     # created_time = serializers.DateTimeField(allow_null=True)
