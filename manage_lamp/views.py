@@ -1,3 +1,5 @@
+# coding: utf-8
+from django.db.models import Q
 from manage_lamp.models import Lamp
 from manage_lamp.serializers import LampSerializer
 from rest_framework import viewsets
@@ -5,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, list_route
 import datetime
-
+from utils.constants import *
 
 class LampViewSet(viewsets.ModelViewSet):
     queryset = Lamp.objects.all().filter(is_deleted=False)
@@ -32,11 +34,61 @@ class LampViewSet(viewsets.ModelViewSet):
         :param kwargs: 
         :return: 
         """
-        print('=============list===============')
-        print(kwargs)
-        print(request.query_params)
 
         queryset = self.filter_queryset(self.get_queryset())
+
+        # 多条件动态模糊查询，无需查询的字段不传进来
+        query_params = request.query_params
+        print('query_params：', query_params)
+
+        Q_sn = Q()
+        Q_registered_time = Q()
+        Q_others = Q()
+        for kw in query_params:
+            if kw == 'sn' and ',' in query_params[kw]:
+                # sn逗号查询，如['20160805,20170911']，进行or联结
+                for sn in query_params[kw].split(','):
+                    Q_sn.add(Q(**{kw + '__icontains': sn}), Q.OR)     # icontains: case-insensitive
+            elif kw == 'sn' and ',' not in query_params[kw]:
+                Q_sn.add(Q(**{kw + '__icontains': query_params[kw]}), Q.AND)
+
+            if kw == 'registered_time':
+                print(query_params[kw].split('~'))
+                if query_params[kw].split('~')[0] == '':
+                    # 没有起始日期：registered_time=~2017-09-04
+                    date2 = query_params[kw].split('~')[1]
+                    start_date = datetime.date(MIN_YEAR, MIN_MONTH, MIN_DAY)
+                    end_date = datetime.date(
+                        int(date2.split('-')[0]),
+                        int(date2.split('-')[1]),
+                        int(date2.split('-')[2])
+                    )
+                elif query_params[kw].split('~')[1] == '':
+                    # 没有截至日期：registered_time=2017-07-01~
+                    date1 = query_params[kw].split('~')[0]
+                    start_date = datetime.date(
+                        int(date1.split('-')[0]),
+                        int(date1.split('-')[1]),
+                        int(date1.split('-')[2])
+                    )
+                    end_date = datetime.date(MAX_YEAR, MAX_MONTH, MAX_DAY)
+                else:
+                    date1 = query_params[kw].split('~')[0]
+                    date2 = query_params[kw].split('~')[1]
+                    start_date = datetime.date(
+                        int(date1.split('-')[0]),
+                        int(date1.split('-')[1]),
+                        int(date1.split('-')[2]))
+                    end_date = datetime.date(
+                        int(date2.split('-')[0]),
+                        int(date2.split('-')[1]),
+                        int(date2.split('-')[2]))
+                Q_registered_time = Q(registered_time__range=(start_date, end_date))
+
+            if kw not in ['sn', 'registered_time']:
+                Q_others.add(Q(**{kw + '__icontains': query_params[kw]}), Q.AND)
+
+        queryset = queryset.filter(Q_sn, Q_registered_time, Q_others)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -56,7 +108,7 @@ class LampViewSet(viewsets.ModelViewSet):
         :param kwargs: 
         :return: 
         """
-        print('===============destroy ', kwargs['pk'], '===================')
+
         instance = self.get_object()
         instance.is_deleted = True
         instance.deleted_time = datetime.datetime.now()

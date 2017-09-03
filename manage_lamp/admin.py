@@ -6,7 +6,7 @@ from manage_lamp import models
 
 
 class LampAdmin(admin.ModelAdmin):
-    list_display = ('sn', 'sequence', 'status', 'type', 'hub_id', 'is_repeated', 'rf_band', 'channel', 'address',
+    list_display = ('id', 'sn', 'sequence', 'status', 'type', 'hub_sn', 'is_repeated', 'rf_band', 'channel', 'address',
                     'registered_time', 'longitude', 'latitude', 'memo', 'is_deleted', 'created_time', 'updated_time',
                     'deleted_time')
 

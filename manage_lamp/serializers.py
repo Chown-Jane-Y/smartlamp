@@ -6,7 +6,7 @@ class LampSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lamp
-        fields = ('sn', 'sequence', 'status', 'type', 'hub_id', 'is_repeated', 'rf_band', 'channel', 'address',
+        fields = ('id', 'sn', 'sequence', 'status', 'type', 'hub_sn', 'is_repeated', 'rf_band', 'channel', 'address',
                   'registered_time', 'longitude', 'latitude', 'memo', 'is_deleted', 'created_time', 'updated_time',
                   'deleted_time')
 
@@ -15,6 +15,7 @@ class LampSerializer(serializers.ModelSerializer):
     # status = serializers.IntegerField()
     # type = serializers.CharField()
     # hub_id = serializers.IntegerField()
+    # hub_sn = serializers.CharField()
     is_repeated = serializers.BooleanField(default=False)
     # rf_band = serializers.CharField()
     # channel = serializers.CharField()

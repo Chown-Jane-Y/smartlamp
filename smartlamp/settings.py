@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'manage_hub',
     'manage_lamp',
     'rest_framework',
+    # 'manage_user',
     'corsheaders',                          # CORS
 ]
 
