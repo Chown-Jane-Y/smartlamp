@@ -13,7 +13,7 @@ class Hub(models.Model):
     longitude = models.FloatField(max_length=8)
     latitude = models.FloatField(max_length=8)
     memo = models.CharField(max_length=255, blank=True)
-    registered_time = models.DateField(auto_now_add=True)
+    registered_time = models.DateField()
     is_deleted = models.BooleanField(default=False)
     created_time = models.DateTimeField(auto_now_add=True)
     updated_time = models.DateTimeField(auto_now=True)

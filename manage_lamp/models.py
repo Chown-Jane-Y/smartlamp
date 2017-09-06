@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from manage_hub.models import Hub
 from django.db import models
 
 
@@ -11,12 +10,13 @@ class Lamp(models.Model):
     sequence = models.CharField(max_length=8)
     status = models.SmallIntegerField(default=0, choices=STATUS_CHOICE)    # （1：正常，2：故障）
     type = models.SmallIntegerField(default=1, choices=TYPE_CHOICE)        # （1：钠灯，2：LED）
-    hub_id = models.ForeignKey(Hub, related_name='lamp_set', verbose_name=u"所属集控")
+    # hub_id = models.ForeignKey(Hub, related_name='lamp_set', verbose_name=u"所属集控")
+    hub_sn = models.CharField(max_length=16)
     is_repeated = models.BooleanField(default='False')
     rf_band = models.CharField(max_length=20)
     channel = models.CharField(max_length=20)
     address = models.CharField(max_length=60)
-    registered_time = models.DateField(auto_now_add=True)
+    registered_time = models.DateField()
     longitude = models.FloatField(max_length=8)
     latitude = models.FloatField(max_length=8)
     memo = models.CharField(max_length=255, blank=True)

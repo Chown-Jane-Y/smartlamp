@@ -13,10 +13,10 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import url
 from django.contrib import admin
 from django.conf.urls import url, include
 from rest_framework import routers
+
 from manage_lamp import views as lamp_views
 from manage_hub import views as hub_views
 
@@ -25,8 +25,14 @@ router.register(r'hubs', hub_views.HubViewSet)
 router.register(r'lamps', lamp_views.LampViewSet)
 
 
+hub_lamps_view = lamp_views.HubLampViewSet.as_view({
+    'get': 'list',
+})
+
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include(router.urls)),
+    url(r'^hubs/(?P<hub_sn>[0-9]+)/lamps/', hub_lamps_view, name='hub-lamps-list'),      # /hubs/{id}/lamps
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

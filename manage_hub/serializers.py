@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from manage_hub.models import Hub
+
+from .models import Hub
 
 
 class HubSerializer(serializers.ModelSerializer):
